@@ -112,32 +112,36 @@
         { 
             id: 'win', title: 'WINDOWS', color: '#00a3da', x: 80, y: 150, icon: '🪟',
             imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Windows_Logo_%281992-2001%29.svg',
-            systems: ['Windows 94', 'Windows 9', 'Windows Modern Edition']
+            systems: [
+                { name: 'Windows 94' },
+                { name: 'Windows 9' },
+                { name: 'Windows Modern Edition', url: 'https://twobbular.github.io/OSWorks/OSWorks%20-%20Windows%20Modern%20Edition.html' }
+            ]
         },
         { 
             id: 'mac', title: 'MACOS', color: '#ffffff', x: 320, y: 150, icon: '🍎',
             imgUrl: 'https://i.redd.it/n5sf3i42dgkd1.png',
-            systems: ['MacOS 11.13']
+            systems: [{ name: 'MacOS 11.13' }]
         },
         { 
             id: 'linux', title: 'LINUX', color: '#32de84', x: 560, y: 150, icon: '🐧',
             imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/500px-Tux.svg.png',
-            systems: ['Linux 4', 'Linux Pizza Hut']
+            systems: [{ name: 'Linux 4' }, { name: 'Linux Pizza Hut' }]
         },
         { 
             id: 'intel', title: 'INTEL', color: '#0071c5', x: 80, y: 350, icon: '💾',
             imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/250px-Intel_logo_%282006-2020%29.svg.png',
-            systems: ['ReactOS']
+            systems: [{ name: 'ReactOS' }]
         },
         { 
             id: 'phone', title: 'PHONE OS', color: '#ffcc00', x: 320, y: 350, icon: '📱',
             imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Android_logo_2019.png',
-            systems: ['Android', 'D19']
+            systems: [{ name: 'Android' }, { name: 'D19' }]
         },
         { 
             id: 'other', title: 'OTHER', color: '#e95420', x: 560, y: 350, icon: '🌀',
             imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Logo-ubuntu_cof-orange-hex.svg/1200px-Logo-ubuntu_cof-orange-hex.svg.png',
-            systems: ['Ubuntu']
+            systems: [{ name: 'Ubuntu' }]
         }
     ];
 
@@ -256,11 +260,15 @@
             ctx.fillStyle = isHover ? '#000' : '#fff';
             ctx.font = '24px VT323';
             ctx.textAlign = 'left';
-            ctx.fillText(`> ${sys}`, 170, btnY + 33);
+            ctx.fillText(`> ${sys.name}`, 170, btnY + 33);
             
             if (isHover && clicked) {
                 clicked = false;
-                alert(`OSWorks Alert: \n\nConnecting to virtual ${sys} instance...\n\nPlease verify your credit card for identity check.`);
+                if (sys.url) {
+                    window.location.href = sys.url;
+                } else {
+                    alert(`OSWorks Critical Error: \n\nFailed to verify OS authenticity, may be corrupted!`);
+                }
             }
         });
 
