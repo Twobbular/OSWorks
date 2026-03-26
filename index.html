@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSWorks - UNLIMITED OS EMULATOR (FREE NO VIRUS)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        
+        body {
+            background-color: #0000aa; /* Classic BSOD Blue */
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'VT323', monospace;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+            max-width: 95vw;
+            max-height: 80vh;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5), inset 0 0 100px rgba(0, 0, 0, 0.2);
+            border: 8px solid #c0c0c0;
+            border-bottom-color: #808080;
+            border-right-color: #808080;
+            background: #000;
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%,
+                rgba(0, 0, 0, 0.1) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.02),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.02)
+            );
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .scrolling-text {
+            background: #ff0;
+            color: #f00;
+            font-weight: bold;
+            font-size: 1.5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 100%;
+            padding: 5px 0;
+            border-top: 4px solid #f00;
+            border-bottom: 4px solid #f00;
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container">
+    <div class="scrolling-text">
+        <marquee scrollamount="12">
+            Emulate UNLIMITED OS from browser, sir, using OSWorks ONLY!!! No install, no virus, no problem! Run Windows, Mac, Linux, even SECRET systems instantly on ANY device!!! Trusted by millions worldwide, 100% working guaranteed or money back (no refund)!!!
+        </marquee>
+    </div>
+
+    <div class="relative">
+        <canvas id="osCanvas"></canvas>
+        <div class="scanlines"></div>
+    </div>
+
+    <div class="mt-4 text-white text-center">
+        <p class="text-xl animate-pulse">[ CHOOSE CATEGORY TO BEGIN EMULATION ]</p>
+        <p class="text-xs opacity-50 mt-2">© 1994-2025 OSWorks Ltd. "If it works, it's a miracle."</p>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('osCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const V_WIDTH = 800;
+    const V_HEIGHT = 600;
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let clicked = false;
+    let frame = 0;
+
+    const categories = [
+        { id: 'win', title: 'WINDOWS', imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Windows_Logo_%281992-2001%29.svg', icon: '🪟', color: '#00a3da', x: 80, y: 150 },
+        { id: 'mac', title: 'MACOS', imgUrl: 'https://i.redd.it/n5sf3i42dgkd1.png', icon: '🍎', color: '#ffffff', x: 320, y: 150 },
+        { id: 'linux', title: 'LINUX', imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/500px-Tux.svg.png', icon: '🐧', color: '#32de84', x: 560, y: 150 },
+        { id: 'intel', title: 'INTEL', imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/250px-Intel_logo_%282006-2020%29.svg.png', icon: '💾', color: '#0071c5', x: 80, y: 350 },
+        { id: 'phone', title: 'PHONE OS', imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Android_logo_2019.png', icon: '📱', color: '#ffcc00', x: 320, y: 350 },
+        { id: 'other', title: 'OTHER', imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Logo-ubuntu_cof-orange-hex.svg/1200px-Logo-ubuntu_cof-orange-hex.svg.png', icon: '🌀', color: '#e95420', x: 560, y: 350 }
+    ];
+
+    const images = {};
+    
+    function loadImg(cat) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => { img.isLoaded = true; };
+        img.onerror = () => {
+            if (img.crossOrigin === "anonymous") {
+                img.removeAttribute("crossOrigin");
+                img.src = cat.imgUrl;
+            } else {
+                img.isBroken = true;
+            }
+        };
+        img.src = cat.imgUrl;
+        images[cat.id] = img;
+    }
+
+    categories.forEach(loadImg);
+
+    function resize() {
+        canvas.width = V_WIDTH;
+        canvas.height = V_HEIGHT;
+    }
+
+    function drawButton(cat) {
+        const isHover = mouseX >= cat.x && mouseX <= cat.x + 160 && mouseY >= cat.y && mouseY <= cat.y + 120;
+        
+        ctx.save();
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(cat.x + 5, cat.y + 5, 160, 120);
+
+        // Main Box
+        ctx.fillStyle = isHover ? '#333' : '#111';
+        ctx.strokeStyle = isHover ? cat.color : '#444';
+        ctx.lineWidth = 3;
+        ctx.fillRect(cat.x, cat.y, 160, 120);
+        ctx.strokeRect(cat.x, cat.y, 160, 120);
+
+        if (isHover) {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = cat.color;
+            ctx.strokeRect(cat.x - 2, cat.y - 2, 164, 124);
+        }
+
+        const img = images[cat.id];
+        let imageDrawn = false;
+
+        if (img && img.complete && img.naturalWidth > 0 && !img.isBroken) {
+            try {
+                const padding = 25;
+                const imgW = 160 - (padding * 2);
+                const imgH = 60; 
+                const aspect = img.naturalWidth / img.naturalHeight;
+                let drawW = imgW;
+                let drawH = imgW / aspect;
+                
+                if (drawH > imgH) {
+                    drawH = imgH;
+                    drawW = imgH * aspect;
+                }
+
+                ctx.drawImage(img, cat.x + (160 - drawW)/2, cat.y + 15 + (imgH - drawH)/2, drawW, drawH);
+                imageDrawn = true;
+            } catch (e) {
+                imageDrawn = false;
+            }
+        }
+
+        if (!imageDrawn) {
+            ctx.fillStyle = cat.color;
+            ctx.font = '40px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(cat.icon, cat.x + 80, cat.y + 55);
+        }
+
+        ctx.fillStyle = cat.color;
+        ctx.font = 'bold 24px VT323';
+        ctx.textAlign = 'center';
+        ctx.fillText(cat.title, cat.x + 80, cat.y + 100);
+
+        if (isHover && clicked) {
+            triggerAction(cat);
+        }
+
+        ctx.restore();
+    }
+
+    function triggerAction(cat) {
+        clicked = false;
+        const messages = [
+            `ACCESS DENIED: ${cat.title} servers are currently underwater.`,
+            `BOOTING ${cat.title}... Please pay $50 exit fee.`,
+            `WARNING: Uncertified ${cat.title} kernel detected. Proceeding anyway!`,
+            `DOWNLOADING MORE RAM FOR ${cat.title} EMULATION...`
+        ];
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        alert(`OSWorks System Manager: \n\n${msg}\n\n(No Refund Policy active)`);
+    }
+
+    function draw() {
+        frame++;
+        ctx.fillStyle = '#000033';
+        ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(0, 0, V_WIDTH, 60);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = '36px VT323';
+        ctx.textAlign = 'center';
+        ctx.fillText('OSWorks Main Category Selection', V_WIDTH / 2, 42);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        for(let i=0; i<V_WIDTH; i+=40) {
+            ctx.beginPath(); ctx.moveTo(i, 60); ctx.lineTo(i, V_HEIGHT); ctx.stroke();
+        }
+        for(let i=60; i<V_HEIGHT; i+=40) {
+            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(V_WIDTH, i); ctx.stroke();
+        }
+
+        ctx.fillStyle = '#0f0';
+        ctx.font = '18px VT323';
+        ctx.fillText('TRUST LEVEL: EXTREME', 120, 560 + Math.sin(frame/10)*5);
+        ctx.fillText('NO VIRUS (PROBABLY)', 400, 560 + Math.cos(frame/12)*5);
+        ctx.fillText('PARODY SENSE: 100%', 680, 560 + Math.sin(frame/8)*5);
+
+        categories.forEach(drawButton);
+        if (clicked) clicked = false;
+        requestAnimationFrame(draw);
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        mouseX = (e.clientX - rect.left) * scaleX;
+        mouseY = (e.clientY - rect.top) * scaleY;
+    });
+
+    canvas.addEventListener('mousedown', () => clicked = true);
+    window.addEventListener('mouseup', () => clicked = false);
+
+    window.onload = resize;
+    draw();
+</script>
+
+</body>
+</html>
